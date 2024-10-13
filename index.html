@@ -8,25 +8,28 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
+            max-width: 100%;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
             background-color: #f0f4f8;
             color: #333;
         }
         h1, h2 {
             color: #2c3e50;
             text-align: center;
+            font-size: 1.5em;
         }
         .container {
             background-color: white;
             border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
         }
         .input-group {
             display: flex;
+            flex-direction: column;
+            gap: 10px;
             margin-bottom: 15px;
         }
         select, input, button {
@@ -34,13 +37,8 @@
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
-        }
-        select {
-            flex: 1;
-            margin-left: 10px;
-        }
-        input {
-            flex: 3;
+            width: 100%;
+            box-sizing: border-box;
         }
         button {
             background-color: #3498db;
@@ -57,6 +55,10 @@
             justify-content: center;
             margin-top: 20px;
         }
+        #qrcode img {
+            max-width: 100%;
+            height: auto;
+        }
         #history {
             margin-top: 20px;
         }
@@ -67,6 +69,7 @@
             border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s;
+            word-break: break-all;
         }
         #history div:hover {
             background-color: #e8f0fe;
@@ -74,6 +77,27 @@
         .selected {
             background-color: #e8f0fe;
             border-right: 4px solid #3498db;
+        }
+        @media (min-width: 600px) {
+            body {
+                padding: 20px;
+                max-width: 800px;
+            }
+            .input-group {
+                flex-direction: row;
+            }
+            select {
+                width: 30%;
+            }
+            input {
+                width: 50%;
+            }
+            button {
+                width: 20%;
+            }
+            h1, h2 {
+                font-size: 2em;
+            }
         }
     </style>
 </head>
@@ -86,7 +110,7 @@
                 <option value="url">כתובת אתר</option>
             </select>
             <input type="text" id="input" placeholder="הכנס טקסט או כתובת אתר">
-            <button onclick="generateQR()">צור קוד QR</button>
+            <button onclick="generateQR()">צור</button>
         </div>
         <div id="qrcode"></div>
     </div>
@@ -104,8 +128,8 @@
                 document.getElementById("qrcode").innerHTML = "";
                 new QRCode(document.getElementById("qrcode"), {
                     text: qrText,
-                    width: 200,
-                    height: 200
+                    width: 256,
+                    height: 256
                 });
                 addToHistory(type, input);
             }
