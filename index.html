@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>יוצר קודי QR מתקדם</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f4f8;
+            color: #333;
+        }
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        select, input, button {
+            font-size: 16px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        select {
+            flex: 1;
+            margin-left: 10px;
+        }
+        input {
+            flex: 3;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        #history {
+            margin-top: 20px;
+        }
+        #history div {
+            background-color: white;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #history div:hover {
+            background-color: #e8f0fe;
+        }
+        .selected {
+            background-color: #e8f0fe;
+            border-right: 4px solid #3498db;
+        }
+    </style>
+</head>
+<body>
+    <h1>יוצר קודי QR מתקדם</h1>
+    <div class="container">
+        <div class="input-group">
+            <select id="type">
+                <option value="text">טקסט</option>
+                <option value="url">כתובת אתר</option>
+            </select>
+            <input type="text" id="input" placeholder="הכנס טקסט או כתובת אתר">
+            <button onclick="generateQR()">צור קוד QR</button>
+        </div>
+        <div id="qrcode"></div>
+    </div>
+    <div class="container">
+        <h2>היסטוריה</h2>
+        <div id="history"></div>
+    </div>
+
+    <script>
+        function generateQR() {
+            var type = document.getElementById("type").value;
+            var input = document.getElementById("input").value;
+            if (input) {
+                var qrText = type === "url" ? formatURL(input) : input;
+                document.getElementById("qrcode").innerHTML = "";
+                new QRCode(document.getElementById("qrcode"), {
+                    text: qrText,
+                    width: 200,
+                    height: 200
+                });
+                addToHistory(type, input);
+            }
+        }
+
+        function formatURL(url) {
+            if (!/^https?:\/\//i.test(url)) {
+                url = "http://" + url;
+            }
+            return url;
+        }
+
+        function addToHistory(type, text) {
+            var history = getHistory();
+            var entry = { type: type, text: text };
+            if (!history.some(item => item.type === entry.type && item.text === entry.text)) {
+                history.unshift(entry);
+                if (history.length > 5) history.pop();
+                setHistory(history);
+                displayHistory();
+            }
+        }
+
+        function getHistory() {
+            var history = getCookie("qr_history");
+            return history ? JSON.parse(history) : [];
+        }
+
+        function setHistory(history) {
+            setCookie("qr_history", JSON.stringify(history), 365);
+        }
+
+        function displayHistory() {
+            var history = getHistory();
+            var historyHtml = "";
+            for (var i = 0; i < history.length; i++) {
+                historyHtml += `<div onclick="useHistoryItem(${i})">${history[i].type === 'url' ? '🌐' : '📝'} ${history[i].text}</div>`;
+            }
+            document.getElementById("history").innerHTML = historyHtml;
+        }
+
+        function useHistoryItem(index) {
+            var history = getHistory();
+            var item = history[index];
+            document.getElementById("type").value = item.type;
+            document.getElementById("input").value = item.text;
+            generateQR();
+            highlightHistoryItem(index);
+        }
+
+        function highlightHistoryItem(index) {
+            var historyItems = document.getElementById("history").getElementsByTagName("div");
+            for (var i = 0; i < historyItems.length; i++) {
+                historyItems[i].classList.remove("selected");
+            }
+            historyItems[index].classList.add("selected");
+        }
+
+        function setCookie(name, value, days) {
+            var expires = "";
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+
+        function getCookie(name) {
+            var nameEQ = name + "=";
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        displayHistory();
+    </script>
+</body>
+</html>
