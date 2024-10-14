@@ -7,111 +7,101 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root {
-            --primary-color: #4a90e2;
-            --secondary-color: #f39c12;
-            --background-color: #f0f4f8;
-            --text-color: #333;
-            --card-background: #ffffff;
-        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--background-color);
-            color: var(--text-color);
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: #f0f4f8;
+            color: #333;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
         }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
         h1, h2 {
-            color: var(--primary-color);
+            color: #2c3e50;
             text-align: center;
+            font-size: 1.5em;
         }
-        .card {
-            background-color: var(--card-background);
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
         }
         .input-group {
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 15px;
             margin-bottom: 15px;
         }
-        input, button {
+        select, input, button {
             font-size: 16px;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ddd;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-        }
-        input {
-            flex-grow: 1;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
         }
         button {
-            background-color: var(--primary-color);
+            background-color: #3498db;
             color: white;
             border: none;
             cursor: pointer;
-            min-width: 100px;
+            transition: background-color 0.3s;
         }
         button:hover {
-            background-color: #357abd;
+            background-color: #2980b9;
         }
         #qrcode, #reader {
             display: flex;
             justify-content: center;
             margin-top: 20px;
         }
-        #history, #scan-history {
+        #qrcode img, #reader {
+            max-width: 100%;
+            height: auto;
+        }
+        #history {
             margin-top: 20px;
         }
-        .history-item {
-            background-color: #f9f9f9;
+        #history div {
+            background-color: white;
             margin-bottom: 10px;
             padding: 10px;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s;
             word-break: break-all;
         }
-        .history-item:hover {
+        #history div:hover {
             background-color: #e8f0fe;
+        }
+        .selected {
+            background-color: #e8f0fe;
+            border-right: 4px solid #3498db;
         }
         .version {
             text-align: center;
+            margin-top: auto;
             padding: 10px;
             font-size: 0.8em;
             color: #777;
-            margin-top: auto;
         }
         .tabs {
             display: flex;
-            justify-content: center;
+            justify-content: space-around;
             margin-bottom: 20px;
         }
         .tab {
-            padding: 10px 20px;
+            padding: 12px 20px;
             background-color: #ddd;
             border-radius: 5px 5px 0 0;
             cursor: pointer;
-            transition: all 0.3s ease;
         }
         .tab.active {
-            background-color: var(--primary-color);
-            color: white;
+            background-color: white;
         }
         .tab-content {
             display: none;
@@ -132,64 +122,54 @@
             max-width: 200px;
             height: auto;
         }
-        @media (max-width: 600px) {
-            .container {
-                padding: 10px;
+        @media (min-width: 600px) {
+            body {
+                padding: 20px;
+                max-width: 800px;
             }
             .input-group {
-                flex-direction: column;
+                flex-direction: row;
+            }
+            input {
+                width: 70%;
             }
             button {
-                width: 100%;
+                width: 30%;
             }
-            .tabs {
-                flex-direction: column;
-                align-items: center;
-            }
-            .tab {
-                width: 100%;
-                text-align: center;
-                border-radius: 0;
-            }
-            .tab:first-child {
-                border-radius: 5px 5px 0 0;
-            }
-            .tab:last-child {
-                border-radius: 0 0 5px 5px;
+            h1, h2 {
+                font-size: 2em;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>יוצר וסורק קודי QR מתקדם</h1>
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('create')">יצירת QR</div>
-            <div class="tab" onclick="switchTab('scan')">סריקת QR</div>
+    <h1>יוצר וסורק קודי QR מתקדם</h1>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('create')">יצירת QR</div>
+        <div class="tab" onclick="switchTab('scan')">סריקת QR</div>
+    </div>
+    <div id="create-tab" class="tab-content active">
+        <div class="container">
+            <div class="input-group">
+                <input type="text" id="input" placeholder="הכנס כתובת אתר">
+                <button onclick="generateQR()">צור</button>
+            </div>
+            <div id="qrcode"></div>
         </div>
-        <div id="create-tab" class="tab-content active">
-            <div class="card">
-                <div class="input-group">
-                    <input type="text" id="input" placeholder="הכנס כתובת אתר">
-                    <button onclick="generateQR()">צור QR</button>
-                </div>
-                <div id="qrcode"></div>
-            </div>
-            <div class="card">
-                <h2>היסטוריה</h2>
-                <div id="history"></div>
-            </div>
+        <div class="container">
+            <h2>היסטוריה</h2>
+            <div id="history"></div>
         </div>
-        <div id="scan-tab" class="tab-content">
-            <div class="card">
-                <button id="scanButton" onclick="startScanner()">סריקת קוד QR קיים</button>
-                <div id="reader"></div>
-                <div id="scanned-qr"></div>
-            </div>
-            <div class="card">
-                <h2>היסטוריית סריקות</h2>
-                <div id="scan-history"></div>
-            </div>
+    </div>
+    <div id="scan-tab" class="tab-content">
+        <div class="container">
+            <button id="scanButton" onclick="startScanner()">סריקת קוד QR קיים</button>
+            <div id="reader"></div>
+            <div id="scanned-qr"></div>
+        </div>
+        <div class="container">
+            <h2>היסטוריית סריקות</h2>
+            <div id="scan-history"></div>
         </div>
     </div>
     <div class="version">גרסה: 2.1.0</div>
@@ -246,7 +226,7 @@
             var history = getHistory(type);
             var historyHtml = "";
             for (var i = 0; i < history.length; i++) {
-                historyHtml += `<div class="history-item" onclick="useHistoryItem('${history[i]}', '${type}')">${history[i]}</div>`;
+                historyHtml += `<div onclick="useHistoryItem('${history[i]}', '${type}')">${history[i]}</div>`;
             }
             document.getElementById(type === 'create' ? "history" : "scan-history").innerHTML = historyHtml;
         }
@@ -287,15 +267,24 @@
             if (html5QrcodeScanner) {
                 html5QrcodeScanner.clear();
             }
-            html5QrcodeScanner = new Html5QrcodeScanner(
-                "reader", { fps: 10, qrbox: 250 });
-            html5QrcodeScanner.render(onScanSuccess);
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
+                .catch((err) => {
+                    console.error(`QR Code scanning failed: ${err}`);
+                    alert("סליחה, לא הצלחנו להפעיל את המצלמה. אנא ודא שנתת הרשאות מצלמה ונסה שוב.");
+                });
         }
 
         function onScanSuccess(decodedText, decodedResult) {
-            html5QrcodeScanner.clear();
-            showScannedQR(decodedText);
-            addToHistory(decodedText, 'scan');
+            html5QrcodeScanner.stop().then(() => {
+                showScannedQR(decodedText);
+                addToHistory(decodedText, 'scan');
+            });
         }
 
         function showScannedQR(text) {
