@@ -122,6 +122,26 @@
             max-width: 200px;
             height: auto;
         }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .action-buttons button {
+            padding: 12px;
+            font-size: 16px;
+        }
+        @media (min-width: 480px) {
+            .action-buttons {
+                flex-direction: row;
+                justify-content: center;
+            }
+            .action-buttons button {
+                width: auto;
+                min-width: 120px;
+            }
+        }
         @media (min-width: 600px) {
             body {
                 padding: 20px;
@@ -171,7 +191,7 @@
             <div id="scan-history"></div>
         </div>
     </div>
-    <div class="version">גרסה: 2.2.0</div>
+    <div class="version">גרסה: 2.3.0</div>
 
     <script>
         let html5QrcodeScanner;
@@ -298,10 +318,11 @@
                 <h3>הקוד שנסרק:</h3>
                 <div id="scanned-qrcode"></div>
                 <p>כתובת האתר: ${text}</p>
-                <p>האם תרצה להיכנס לקישור? 
+                <p>האם תרצה להיכנס לקישור?</p>
+                <div class="action-buttons">
                     <button onclick="window.open('${text}', '_blank')">כן</button>
                     <button onclick="clearScannedQR()">לא</button>
-                </p>
+                </div>
             `;
             new QRCode(document.getElementById("scanned-qrcode"), {
                 text: text,
