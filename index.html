@@ -163,7 +163,6 @@
     </div>
     <div id="scan-tab" class="tab-content">
         <div class="container">
-            <button id="scanButton" onclick="startScanner()">סריקת קוד QR קיים</button>
             <div id="reader"></div>
             <div id="scanned-qr"></div>
         </div>
@@ -172,14 +171,22 @@
             <div id="scan-history"></div>
         </div>
     </div>
-    <div class="version">גרסה: 2.1.0</div>
+    <div class="version">גרסה: 2.2.0</div>
 
     <script>
+        let html5QrcodeScanner;
+
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.getElementById(tabName + '-tab').classList.add('active');
             document.querySelector(`.tab:nth-child(${tabName === 'create' ? 1 : 2})`).classList.add('active');
+            
+            if (tabName === 'scan') {
+                startScanner();
+            } else if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().catch(error => console.error(error));
+            }
         }
 
         function generateQR() {
@@ -261,8 +268,6 @@
             return null;
         }
 
-        let html5QrcodeScanner;
-
         function startScanner() {
             if (html5QrcodeScanner) {
                 html5QrcodeScanner.clear();
@@ -307,6 +312,7 @@
 
         function clearScannedQR() {
             document.getElementById("scanned-qr").innerHTML = "";
+            startScanner();
         }
 
         displayHistory('create');
