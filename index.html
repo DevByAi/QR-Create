@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>יוצר וסורק קודי QR - גרסה פשוטה</title>
+    <title>יוצר וסורק קודי QR מתקדם</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js"></script>
     <style>
@@ -28,7 +28,7 @@
             padding: 20px;
         }
 
-        h1 {
+        h1, h2 {
             color: var(--primary-color);
             text-align: center;
         }
@@ -62,6 +62,10 @@
             display: block;
         }
 
+        .input-group, .search-bar {
+            margin-bottom: 20px;
+        }
+
         input[type="text"], input[type="url"] {
             width: 100%;
             padding: 10px;
@@ -84,18 +88,12 @@
             background-color: #005fa3;
         }
 
-        #qrcode {
+        #qrcode, #reader, #scanned-qr {
             text-align: center;
             margin-top: 20px;
         }
 
-        #reader {
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        #history {
+        #history, #scan-history {
             margin-top: 20px;
         }
 
@@ -113,6 +111,13 @@
             margin-left: 10px;
         }
 
+        .version {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #666;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 10px;
@@ -126,60 +131,78 @@
 </head>
 <body>
     <div class="container">
-        <h1>יוצר וסורק קודי QR - גרסה פשוטה</h1>
+        <h1>יוצר וסורק קודי QR מתקדם</h1>
         
         <div class="tabs" role="tablist">
-            <button class="tab active" onclick="openTab(event, 'create')" role="tab" aria-selected="true" aria-controls="create">יצירה</button>
-            <button class="tab" onclick="openTab(event, 'scan')" role="tab" aria-selected="false" aria-controls="scan">סריקה</button>
-            <button class="tab" onclick="openTab(event, 'history')" role="tab" aria-selected="false" aria-controls="history">היסטוריה</button>
+            <button class="tab active" onclick="switchTab('create')" role="tab" aria-selected="true" aria-controls="create-tab">יצירת QR</button>
+            <button class="tab" onclick="switchTab('scan')" role="tab" aria-selected="false" aria-controls="scan-tab">סריקת QR</button>
         </div>
 
-        <div id="create" class="tab-content active" role="tabpanel" aria-labelledby="create-tab">
-            <input type="url" id="url" placeholder="הכנס כתובת URL" aria-label="הכנס כתובת URL">
-            <button onclick="generateQR()" aria-label="צור קוד QR">צור קוד QR</button>
-            <div id="qrcode"></div>
+        <div id="create-tab" class="tab-content active" role="tabpanel">
+            <div class="container">
+                <div class="input-group">
+                    <input type="url" id="url" placeholder="הכנס כתובת URL" aria-label="הכנס כתובת URL">
+                    <button onclick="generateQR()" aria-label="צור קוד QR">צור</button>
+                </div>
+                <div id="qrcode"></div>
+            </div>
+
+            <div class="container">
+                <h2>היסטוריה</h2>
+                <div class="search-bar">
+                    <input type="text" id="create-search" placeholder="חיפוש" onkeyup="searchHistory('create')" aria-label="חפש בהיסטוריית יצירה">
+                </div>
+                <div id="history"></div>
+            </div>
         </div>
 
-        <div id="scan" class="tab-content" role="tabpanel" aria-labelledby="scan-tab">
-            <div id="reader"></div>
-        </div>
+        <div id="scan-tab" class="tab-content" role="tabpanel">
+            <div class="container">
+                <div id="reader"></div>
+                <div id="scanned-qr"></div>
+            </div>
 
-        <div id="history" class="tab-content" role="tabpanel" aria-labelledby="history-tab">
-            <input type="text" id="search" placeholder="חפש בהיסטוריה" onkeyup="searchHistory()" aria-label="חפש בהיסטוריה">
-            <div id="historyList"></div>
+            <div class="container">
+                <h2>היסטוריית סריקות</h2>
+                <div class="search-bar">
+                    <input type="text" id="scan-search" placeholder="חיפוש" onkeyup="searchHistory('scan')" aria-label="חפש בהיסטוריית סריקה">
+                </div>
+                <div id="scan-history"></div>
+            </div>
         </div>
     </div>
 
+    <div class="version">
+        גרסה: 2.6.0
+    </div>
+
     <script>
-        let history = JSON.parse(localStorage.getItem('qrHistory')) || [];
+        let createHistory = JSON.parse(localStorage.getItem('createHistory')) || [];
+        let scanHistory = JSON.parse(localStorage.getItem('scanHistory')) || [];
         let qrcode;
 
         document.addEventListener('DOMContentLoaded', function() {
-            displayHistory();
+            displayHistory('create');
+            displayHistory('scan');
         });
 
-        function openTab(evt, tabName) {
-            const tabContents = document.getElementsByClassName("tab-content");
-            for (let i = 0; i < tabContents.length; i++) {
-                tabContents[i].style.display = "none";
-                tabContents[i].setAttribute('aria-hidden', 'true');
-            }
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+                tab.setAttribute('aria-hidden', 'true');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+                tab.setAttribute('aria-selected', 'false');
+            });
 
-            const tabs = document.getElementsByClassName("tab");
-            for (let i = 0; i < tabs.length; i++) {
-                tabs[i].className = tabs[i].className.replace(" active", "");
-                tabs[i].setAttribute('aria-selected', 'false');
-            }
-
-            document.getElementById(tabName).style.display = "block";
-            document.getElementById(tabName).setAttribute('aria-hidden', 'false');
-            evt.currentTarget.className += " active";
-            evt.currentTarget.setAttribute('aria-selected', 'true');
+            document.getElementById(tabName + '-tab').classList.add('active');
+            document.getElementById(tabName + '-tab').setAttribute('aria-hidden', 'false');
+            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).setAttribute('aria-selected', 'true');
 
             if (tabName === 'scan') {
                 startScanner();
-            } else if (tabName === 'history') {
-                displayHistory();
             }
         }
 
@@ -199,7 +222,7 @@
                         correctLevel : QRCode.CorrectLevel.H
                     });
                 }
-                addToHistory('created', url);
+                addToHistory('create', url);
             }
         }
 
@@ -210,63 +233,61 @@
         }
 
         function onScanSuccess(decodedText, decodedResult) {
-            addToHistory('scanned', decodedText);
-            alert(`קוד QR נסרק: ${decodedText}`);
+            document.getElementById('scanned-qr').innerText = `נסרק: ${decodedText}`;
+            addToHistory('scan', decodedText);
         }
 
         function addToHistory(type, data) {
-            const item = { type, data, date: new Date().toISOString(), name: data };
-            history.unshift(item);
-            localStorage.setItem('qrHistory', JSON.stringify(history));
-            if (document.getElementById('history').style.display !== 'none') {
-                displayHistory();
+            const item = { data, date: new Date().toISOString() };
+            if (type === 'create') {
+                createHistory.unshift(item);
+                localStorage.setItem('createHistory', JSON.stringify(createHistory));
+            } else {
+                scanHistory.unshift(item);
+                localStorage.setItem('scanHistory', JSON.stringify(scanHistory));
             }
+            displayHistory(type);
         }
 
-        function displayHistory() {
-            const historyList = document.getElementById('historyList');
-            historyList.innerHTML = '';
+        function displayHistory(type) {
+            const historyElement = document.getElementById(type === 'create' ? 'history' : 'scan-history');
+            const history = type === 'create' ? createHistory : scanHistory;
+            historyElement.innerHTML = '';
             history.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 div.innerHTML = `
-                    <span>${item.name}</span>
+                    <span>${item.data}</span>
                     <div>
                         <button onclick="copyToClipboard('${item.data}')" aria-label="העתק">העתק</button>
                         <button onclick="openLink('${item.data}')" aria-label="פתח">פתח</button>
-                        <button onclick="editName(${index})" aria-label="ערוך">ערוך</button>
-                        <button onclick="deleteItem(${index})" aria-label="מחק">מחק</button>
+                        <button onclick="deleteItem('${type}', ${index})" aria-label="מחק">מחק</button>
                     </div>
                 `;
-                historyList.appendChild(div);
+                historyElement.appendChild(div);
             });
         }
 
-        function searchHistory() {
-            const searchTerm = document.getElementById('search').value.toLowerCase();
+        function searchHistory(type) {
+            const searchTerm = document.getElementById(type + '-search').value.toLowerCase();
+            const history = type === 'create' ? createHistory : scanHistory;
             const filteredHistory = history.filter(item => 
-                item.name.toLowerCase().includes(searchTerm) || 
                 item.data.toLowerCase().includes(searchTerm)
             );
-            displayFilteredHistory(filteredHistory);
-        }
-
-        function displayFilteredHistory(filteredHistory) {
-            const historyList = document.getElementById('historyList');
-            historyList.innerHTML = '';
+            const historyElement = document.getElementById(type === 'create' ? 'history' : 'scan-history');
+            historyElement.innerHTML = '';
             filteredHistory.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 div.innerHTML = `
-                    <span>${item.name}</span>
+                    <span>${item.data}</span>
                     <div>
                         <button onclick="copyToClipboard('${item.data}')" aria-label="העתק">העתק</button>
                         <button onclick="openLink('${item.data}')" aria-label="פתח">פתח</button>
-                        <button onclick="editName(${index})" aria-label="ערוך">ערוך</button>
-                        <button onclick="deleteItem(${index})" aria-label="מחק">מחק</button>
+                        <button onclick="deleteItem('${type}', ${index})" aria-label="מחק">מחק</button>
                     </div>
                 `;
-                historyList.appendChild(div);
+                historyElement.appendChild(div);
             });
         }
 
@@ -280,20 +301,16 @@
             window.open(url, '_blank');
         }
 
-        function editName(index) {
-            const newName = prompt('הכנס שם חדש:', history[index].name);
-            if (newName !== null) {
-                history[index].name = newName;
-                localStorage.setItem('qrHistory', JSON.stringify(history));
-                displayHistory();
-            }
-        }
-
-        function deleteItem(index) {
+        function deleteItem(type, index) {
             if (confirm('האם אתה בטוח שברצונך למחוק פריט זה?')) {
-                history.splice(index, 1);
-                localStorage.setItem('qrHistory', JSON.stringify(history));
-                displayHistory();
+                if (type === 'create') {
+                    createHistory.splice(index, 1);
+                    localStorage.setItem('createHistory', JSON.stringify(createHistory));
+                } else {
+                    scanHistory.splice(index, 1);
+                    localStorage.setItem('scanHistory', JSON.stringify(scanHistory));
+                }
+                displayHistory(type);
             }
         }
     </script>
