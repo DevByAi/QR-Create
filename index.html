@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -12,6 +13,8 @@
             --secondary-color: #ffffff;
             --text-color: #333333;
             --background-color: #f0f0f0;
+            --card-background: #ffffff;
+            transition: all 0.3s ease;
         }
 
         body {
@@ -20,6 +23,7 @@
             padding: 0;
             background-color: var(--background-color);
             color: var(--text-color);
+            transition: background-color 0.3s ease;
         }
 
         .container {
@@ -64,12 +68,13 @@
 
         .input-group, .search-bar {
             margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
         }
 
         input[type="text"], input[type="url"] {
-            width: 100%;
+            flex-grow: 1;
             padding: 10px;
-            margin-bottom: 10px;
             border: 1px solid #ccc;
             border-radius: 20px;
         }
@@ -82,6 +87,7 @@
             cursor: pointer;
             border-radius: 20px;
             transition: background-color 0.3s;
+            white-space: nowrap;
         }
 
         button:hover {
@@ -98,17 +104,18 @@
         }
 
         .history-item {
-            background-color: var(--secondary-color);
+            background-color: var(--card-background);
             padding: 10px;
             margin-bottom: 10px;
             border-radius: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .history-item button {
-            margin-left: 10px;
+            margin-left: 5px;
         }
 
         .version {
@@ -116,6 +123,13 @@
             margin-top: 20px;
             font-size: 0.8em;
             color: #666;
+        }
+
+        .night-mode-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
         }
 
         @media (max-width: 600px) {
@@ -126,10 +140,33 @@
             .tab {
                 padding: 8px 16px;
             }
+
+            .input-group, .search-bar {
+                flex-direction: column;
+            }
+
+            .history-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .history-item button {
+                margin-top: 5px;
+            }
+        }
+
+        .night-mode {
+            --primary-color: #4da6ff;
+            --secondary-color: #2c2c2c;
+            --text-color: #ffffff;
+            --background-color: #1a1a1a;
+            --card-background: #2c2c2c;
         }
     </style>
 </head>
 <body>
+    <button class="night-mode-toggle" onclick="toggleNightMode()" aria-label="החלף מצב לילה">🌙</button>
+
     <div class="container">
         <h1>יוצר וסורק קודי QR מתקדם</h1>
         
@@ -142,6 +179,7 @@
             <div class="container">
                 <div class="input-group">
                     <input type="url" id="url" placeholder="הכנס כתובת URL" aria-label="הכנס כתובת URL">
+                    <input type="text" id="url-name" placeholder="שם (אופציונלי)" aria-label="שם לקישור">
                     <button onclick="generateQR()" aria-label="צור קוד QR">צור</button>
                 </div>
                 <div id="qrcode"></div>
@@ -160,6 +198,10 @@
             <div class="container">
                 <div id="reader"></div>
                 <div id="scanned-qr"></div>
+                <div class="input-group">
+                    <input type="text" id="scan-name" placeholder="שם לסריקה (אופציונלי)" aria-label="שם לסריקה">
+                    <button onclick="saveScan()" aria-label="שמור סריקה">שמור סריקה</button>
+                </div>
             </div>
 
             <div class="container">
@@ -180,10 +222,15 @@
         let createHistory = JSON.parse(localStorage.getItem('createHistory')) || [];
         let scanHistory = JSON.parse(localStorage.getItem('scanHistory')) || [];
         let qrcode;
+        let lastScannedCode = '';
 
         document.addEventListener('DOMContentLoaded', function() {
             displayHistory('create');
             displayHistory('scan');
+            if (localStorage.getItem('nightMode') === 'true') {
+                document.body.classList.add('night-mode');
+                document.querySelector('.night-mode-toggle').textContent = '☀️';
+            }
         });
 
         function switchTab(tabName) {
@@ -208,6 +255,7 @@
 
         function generateQR() {
             const url = document.getElementById('url').value;
+            const name = document.getElementById('url-name').value || url;
             if (url) {
                 if (qrcode) {
                     qrcode.clear();
@@ -222,7 +270,7 @@
                         correctLevel : QRCode.CorrectLevel.H
                     });
                 }
-                addToHistory('create', url);
+                addToHistory('create', url, name);
             }
         }
 
@@ -234,11 +282,19 @@
 
         function onScanSuccess(decodedText, decodedResult) {
             document.getElementById('scanned-qr').innerText = `נסרק: ${decodedText}`;
-            addToHistory('scan', decodedText);
+            lastScannedCode = decodedText;
         }
 
-        function addToHistory(type, data) {
-            const item = { data, date: new Date().toISOString() };
+        function saveScan() {
+            const name = document.getElementById('scan-name').value || lastScannedCode;
+            if (lastScannedCode) {
+                addToHistory('scan', lastScannedCode, name);
+                document.getElementById('scan-name').value = '';
+            }
+        }
+
+        function addToHistory(type, data, name) {
+            const item = { data, name, date: new Date().toISOString() };
             if (type === 'create') {
                 createHistory.unshift(item);
                 localStorage.setItem('createHistory', JSON.stringify(createHistory));
@@ -257,10 +313,11 @@
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 div.innerHTML = `
-                    <span>${item.data}</span>
+                    <span>${item.name}</span>
                     <div>
                         <button onclick="copyToClipboard('${item.data}')" aria-label="העתק">העתק</button>
                         <button onclick="openLink('${item.data}')" aria-label="פתח">פתח</button>
+                        <button onclick="editName('${type}', ${index})" aria-label="ערוך">ערוך שם</button>
                         <button onclick="deleteItem('${type}', ${index})" aria-label="מחק">מחק</button>
                     </div>
                 `;
@@ -272,7 +329,7 @@
             const searchTerm = document.getElementById(type + '-search').value.toLowerCase();
             const history = type === 'create' ? createHistory : scanHistory;
             const filteredHistory = history.filter(item => 
-                item.data.toLowerCase().includes(searchTerm)
+                item.data.toLowerCase().includes(searchTerm) || item.name.toLowerCase().includes(searchTerm)
             );
             const historyElement = document.getElementById(type === 'create' ? 'history' : 'scan-history');
             historyElement.innerHTML = '';
@@ -280,10 +337,11 @@
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 div.innerHTML = `
-                    <span>${item.data}</span>
+                    <span>${item.name}</span>
                     <div>
                         <button onclick="copyToClipboard('${item.data}')" aria-label="העתק">העתק</button>
                         <button onclick="openLink('${item.data}')" aria-label="פתח">פתח</button>
+                        <button onclick="editName('${type}', ${index})" aria-label="ערוך">ערוך שם</button>
                         <button onclick="deleteItem('${type}', ${index})" aria-label="מחק">מחק</button>
                     </div>
                 `;
@@ -301,16 +359,38 @@
             window.open(url, '_blank');
         }
 
+        function editName(type, index) {
+            const history = type === 'create' ? createHistory : scanHistory;
+            const newName = prompt('הכנס שם חדש:', history[index].name);
+            if (newName !== null) {
+                history[index].name = newName;
+                localStorage.setItem(type + 'History', JSON.stringify(history));
+                displayHistory(type);
+            }
+        }
+
         function deleteItem(type, index) {
             if (confirm('האם אתה בטוח שברצונך למחוק פריט זה?')) {
-                if (type === 'create') {
-                    createHistory.splice(index, 1);
-                    localStorage.setItem('createHistory', JSON.stringify(createHistory));
-                } else {
-                    scanHistory.splice(index, 1);
-                    localStorage.setItem('scanHistory', JSON.stringify(scanHistory));
-                }
+                const history = type === 'create' ? createHistory : scanHistory;
+                history.splice(index, 1);
+                localStorage.setItem(type + 'History', JSON.stringify(history));
                 displayHistory(type);
+            }
+        }
+
+        function toggleNightMode
+            function toggleNightMode() {
+            document.body.classList.toggle('night-mode');
+            const isNightMode = document.body.classList.contains('night-mode');
+            localStorage.setItem('nightMode', isNightMode);
+            
+            const nightModeToggle = document.querySelector('.night-mode-toggle');
+            nightModeToggle.textContent = isNightMode ? '☀️' : '🌙';
+            
+            // עדכון צבעי קוד ה-QR אם קיים
+            if (qrcode) {
+                qrcode.clear();
+                qrcode.makeCode(document.getElementById('url').value);
             }
         }
     </script>
