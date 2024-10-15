@@ -81,11 +81,12 @@
             </div>
         </div>
     </div>
-    <div class="version">גרסה: 2.6.2</div>
+    <div class="version">גרסה: 2.6.4</div>
     <script>
         let createHistory = JSON.parse(localStorage.getItem('createHistory')) || [];
         let scanHistory = JSON.parse(localStorage.getItem('scanHistory')) || [];
         let qrcode, lastScannedCode = '', html5QrcodeScanner;
+
         document.addEventListener('DOMContentLoaded', function() {
             displayHistory('create');
             displayHistory('scan');
@@ -94,6 +95,7 @@
                 document.querySelector('.night-mode-toggle').textContent = '☀️';
             }
         });
+
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
@@ -109,7 +111,8 @@
             document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).setAttribute('aria-selected', 'true');
             if (tabName === 'scan' && !html5QrcodeScanner) startScanner();
         }
-        function generateQR(url = document.getElementById('url').value) {
+
+        function generateQR(url = document.getElementById('url').value, name = document.getElementById('url-name').value) {
             if (url) {
                 if (qrcode) {
                     qrcode.clear();
@@ -124,27 +127,58 @@
                         correctLevel : QRCode.CorrectLevel.H
                     });
                 }
-                const name = document.getElementById('url-name').value || url;
-                addToHistory('create', url, name);
+                
+                const existingItem = createHistory.find(item => item.data === url);
+                if (!existingItem) {
+                    addToHistory('create', url, name || url);
+                }
             }
         }
-        function startScanner() {
-            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-            html5QrcodeScanner.render(onScanSuccess);
+
+        async function startScanner() {
+            try {
+                const devices = await Html5Qrcode.getCameras();
+                const rearCamera = devices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
+                const cameraId = rearCamera ? rearCamera.id : devices[0].id;
+                
+                html5QrcodeScanner = new Html5Qrcode("reader");
+                await html5QrcodeScanner.start(
+                    cameraId, 
+                    {
+                        fps: 10,
+                        qrbox: 250
+                    },
+                    onScanSuccess,
+                    onScanFailure
+                );
+            } catch (err) {
+                console.error("Error starting scanner:", err);
+                alert("לא ניתן להפעיל את הסורק. אנא ודא שיש גישה למצלמה.");
+            }
         }
+
         function onScanSuccess(decodedText, decodedResult) {
             document.getElementById('scanned-qr').innerText = `נסרק: ${decodedText}`;
             lastScannedCode = decodedText;
         }
+
+        function onScanFailure(error) {
+            // console.warn(`QR code scanning failed: ${error}`);
+        }
+
         function saveScan() {
             const name = document.getElementById('scan-name').value || lastScannedCode;
             if (lastScannedCode) {
-                addToHistory('scan', lastScannedCode, name);
+                const existingItem = scanHistory.find(item => item.data === lastScannedCode);
+                if (!existingItem) {
+                    addToHistory('scan', lastScannedCode, name);
+                }
                 document.getElementById('scan-name').value = '';
                 lastScannedCode = '';
                 document.getElementById('scanned-qr').innerText = '';
             }
         }
+
         function addToHistory(type, data, name) {
             const item = { data, name, date: new Date().toISOString() };
             const history = type === 'create' ? createHistory : scanHistory;
@@ -152,6 +186,7 @@
             localStorage.setItem(type + 'History', JSON.stringify(history));
             displayHistory(type);
         }
+
         function displayHistory(type) {
             const historyElement = document.getElementById(type === 'create' ? 'history' : 'scan-history');
             const history = type === 'create' ? createHistory : scanHistory;
@@ -166,11 +201,12 @@
                     <button onclick="deleteItem('${type}', ${index})" aria-label="מחק">מחק</button>
                 </div>`;
                 div.onclick = function(event) {
-                    if (!event.target.closest('button')) generateQR(item.data);
+                    if (!event.target.closest('button')) generateQR(item.data, item.name);
                 };
                 historyElement.appendChild(div);
             });
         }
+
         function searchHistory(type) {
             const searchTerm = document.getElementById(type + '-search').value.toLowerCase();
             const history = type === 'create' ? createHistory : scanHistory;
@@ -179,6 +215,7 @@
             );
             displayFilteredHistory(type, filteredHistory);
         }
+
         function displayFilteredHistory(type, filteredHistory) {
             const historyElement = document.getElementById(type === 'create' ? 'history' : 'scan-history');
             historyElement.innerHTML = '';
@@ -192,17 +229,20 @@
                     <button onclick="deleteItem('${type}', ${index})" aria-label="מחק">מחק</button>
                 </div>`;
                 div.onclick = function(event) {
-                    if (!event.target.closest('button')) generateQR(item.data);
+                    if (!event.target.closest('button')) generateQR(item.data, item.name);
                 };
                 historyElement.appendChild(div);
             });
         }
+
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => alert('הטקסט הועתק ללוח'));
         }
+
         function openLink(url) {
             window.open(url, '_blank');
         }
+
         function editName(type, index) {
             const history = type === 'create' ? createHistory : scanHistory;
             const newName = prompt('הכנס שם חדש:', history[index].name);
@@ -212,6 +252,7 @@
                 displayHistory(type);
             }
         }
+
         function deleteItem(type, index) {
             if (confirm('האם אתה בטוח שברצונך למחוק פריט זה?')) {
                 const history = type === 'create' ? createHistory : scanHistory;
@@ -220,7 +261,7 @@
                 displayHistory(type);
             }
         }
-        function toggleNightMode() {
+            function toggleNightMode() {
             document.body.classList.toggle('night-mode');
             const isNightMode = document.body.classList.contains('night-mode');
             localStorage.setItem('nightMode', isNightMode);
