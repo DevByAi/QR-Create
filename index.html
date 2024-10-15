@@ -135,25 +135,44 @@
             }
         }
 
-        async function startScanner() {
+          async function startScanner() {
             try {
                 const devices = await Html5Qrcode.getCameras();
-                const rearCamera = devices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
-                const cameraId = rearCamera ? rearCamera.id : devices[0].id;
-                
-                html5QrcodeScanner = new Html5Qrcode("reader");
-                await html5QrcodeScanner.start(
-                    cameraId, 
-                    {
-                        fps: 10,
-                        qrbox: 250
-                    },
-                    onScanSuccess,
-                    onScanFailure
-                );
+                let selectedCamera;
+
+                // חיפוש מצלמה אחורית
+                for (const device of devices) {
+                    if (device.label.toLowerCase().includes('back') || 
+                        device.label.toLowerCase().includes('rear') ||
+                        device.label.toLowerCase().includes('אחורית') ||
+                        device.label.toLowerCase().includes('חיצונית')) {
+                        selectedCamera = device;
+                        break;
+                    }
+                }
+
+                // אם לא נמצאה מצלמה אחורית, השתמש במצלמה הראשונה ברשימה
+                if (!selectedCamera && devices.length > 0) {
+                    selectedCamera = devices[devices.length - 1]; // לרוב, המצלמה האחרונה היא האחורית
+                }
+
+                if (selectedCamera) {
+                    html5QrcodeScanner = new Html5Qrcode("reader");
+                    await html5QrcodeScanner.start(
+                        selectedCamera.id, 
+                        {
+                            fps: 10,
+                            qrbox: 250
+                        },
+                        onScanSuccess,
+                        onScanFailure
+                    );
+                } else {
+                    throw new Error("לא נמצאה מצלמה מתאימה.");
+                }
             } catch (err) {
                 console.error("Error starting scanner:", err);
-                alert("לא ניתן להפעיל את הסורק. אנא ודא שיש גישה למצלמה.");
+                alert("לא ניתן להפעיל את הסורק. אנא ודא שיש גישה למצלמה האחורית.");
             }
         }
 
