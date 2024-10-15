@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -8,6 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js"></script>
     <style>
+
         :root {
             --primary-color: #0077be;
             --secondary-color: #ffffff;
@@ -162,7 +162,7 @@
             --background-color: #1a1a1a;
             --card-background: #2c2c2c;
         }
-    </style>
+          </style>
 </head>
 <body>
     <button class="night-mode-toggle" onclick="toggleNightMode()" aria-label="החלף מצב לילה">🌙</button>
@@ -215,7 +215,7 @@
     </div>
 
     <div class="version">
-        גרסה: 2.6.0
+        גרסה: 2.6.1
     </div>
 
     <script>
@@ -223,6 +223,7 @@
         let scanHistory = JSON.parse(localStorage.getItem('scanHistory')) || [];
         let qrcode;
         let lastScannedCode = '';
+        let html5QrcodeScanner;
 
         document.addEventListener('DOMContentLoaded', function() {
             displayHistory('create');
@@ -248,7 +249,7 @@
             document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
             document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).setAttribute('aria-selected', 'true');
 
-            if (tabName === 'scan') {
+            if (tabName === 'scan' && !html5QrcodeScanner) {
                 startScanner();
             }
         }
@@ -275,7 +276,7 @@
         }
 
         function startScanner() {
-            const html5QrcodeScanner = new Html5QrcodeScanner(
+            html5QrcodeScanner = new Html5QrcodeScanner(
                 "reader", { fps: 10, qrbox: 250 });
             html5QrcodeScanner.render(onScanSuccess);
         }
@@ -290,6 +291,8 @@
             if (lastScannedCode) {
                 addToHistory('scan', lastScannedCode, name);
                 document.getElementById('scan-name').value = '';
+                lastScannedCode = '';
+                document.getElementById('scanned-qr').innerText = '';
             }
         }
 
@@ -378,8 +381,7 @@
             }
         }
 
-        function toggleNightMode
-            function toggleNightMode() {
+        function toggleNightMode() {
             document.body.classList.toggle('night-mode');
             const isNightMode = document.body.classList.contains('night-mode');
             localStorage.setItem('nightMode', isNightMode);
@@ -396,3 +398,6 @@
     </script>
 </body>
 </html>
+
+Version 8 of 8
+ 
