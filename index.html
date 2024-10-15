@@ -83,6 +83,7 @@
             display: flex;
             gap: 10px;
             justify-content: center;
+            flex-wrap: wrap;
         }
         .history-item .actions button {
             flex: 1;
@@ -137,17 +138,55 @@
             padding: 12px;
             font-size: 16px;
         }
-        @media (min-width: 480px) {
-            .action-buttons {
-                flex-direction: row;
-                justify-content: center;
+        .search-bar {
+            display: flex;
+            margin-bottom: 15px;
+            background-color: #f0f0f0;
+            border-radius: 25px;
+            padding: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .search-bar input {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            padding: 10px 15px;
+            font-size: 16px;
+            outline: none;
+        }
+        .search-bar button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .search-bar button:hover {
+            background-color: #2980b9;
+        }
+        .qr-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        @media (max-width: 600px) {
+            .search-bar {
+                flex-direction: column;
+                background-color: transparent;
+                box-shadow: none;
+                padding: 0;
             }
-            .action-buttons button {
-                width: auto;
-                min-width: 120px;
+            .search-bar input {
+                border-radius: 25px;
+                margin-bottom: 10px;
+                background-color: #f0f0f0;
+            }
+            .search-bar button {
+                width: 100%;
             }
         }
-        @media (min-width: 600px) {
+        @media (min-width: 601px) {
             body {
                 padding: 20px;
                 max-width: 800px;
@@ -176,13 +215,18 @@
     <div id="create-tab" class="tab-content active">
         <div class="container">
             <div class="input-group">
-                <input type="text" id="input" placeholder="הכנס כתובת אתר">
+                <input type="text" id="input-url" placeholder="הכנס כתובת אתר">
+                <input type="text" id="input-name" placeholder="תן שם לברקוד (אופציונלי)">
                 <button onclick="generateQR()">צור</button>
             </div>
             <div id="qrcode"></div>
         </div>
         <div class="container">
             <h2>היסטוריה</h2>
+            <div class="search-bar">
+                <input type="text" id="search-create" placeholder="חפש בהיסטוריה">
+                <button onclick="searchHistory('create')">חיפוש</button>
+            </div>
             <div id="history"></div>
         </div>
     </div>
@@ -193,10 +237,14 @@
         </div>
         <div class="container">
             <h2>היסטוריית סריקות</h2>
+            <div class="search-bar">
+                <input type="text" id="search-scan" placeholder="חפש בהיסטוריה">
+                <button onclick="searchHistory('scan')">חיפוש</button>
+            </div>
             <div id="scan-history"></div>
         </div>
     </div>
-    <div class="version">גרסה: 2.4.0</div>
+    <div class="version">גרסה: 2.6.0</div>
 
     <script>
         let html5QrcodeScanner;
@@ -215,16 +263,17 @@
         }
 
         function generateQR() {
-            var input = document.getElementById("input").value;
-            if (input) {
-                var qrText = formatURL(input);
+            var inputUrl = document.getElementById("input-url").value;
+            var inputName = document.getElementById("input-name").value;
+            if (inputUrl) {
+                var qrText = formatURL(inputUrl);
                 document.getElementById("qrcode").innerHTML = "";
                 new QRCode(document.getElementById("qrcode"), {
                     text: qrText,
                     width: 256,
                     height: 256
                 });
-                addToHistory(qrText, 'create');
+                addToHistory(qrText, inputName || qrText, 'create');
             }
         }
 
@@ -235,10 +284,10 @@
             return url;
         }
 
-        function addToHistory(text, type) {
+        function addToHistory(url, name, type) {
             var history = getHistory(type);
-            if (!history.some(item => item.url === text)) {
-                history.unshift({ url: text, date: new Date().toISOString() });
+            if (!history.some(item => item.url === url)) {
+                history.unshift({ url: url, name: name, date: new Date().toISOString() });
                 if (history.length > 5) history.pop();
                 setHistory(history, type);
                 displayHistory(type);
@@ -258,19 +307,22 @@
             var history = getHistory(type);
             var historyHtml = "";
             for (var i = 0; i < history.length; i++) {
-                historyHtml += createHistoryItemHtml(history[i], type);
+                historyHtml += createHistoryItemHtml(history[i], type, i);
             }
             document.getElementById(type === 'create' ? "history" : "scan-history").innerHTML = historyHtml;
+            initializeQRCodes(type);
         }
 
-        function createHistoryItemHtml(item, type) {
+        function createHistoryItemHtml(item, type, index) {
             return `
                 <div class="history-item">
-                    <div class="qr-code" id="qr-${type}-${item.date}"></div>
+                    <div class="qr-name">${item.name}</div>
+                    <div class="qr-code" id="qr-${type}-${index}"></div>
                     <div class="url">${item.url}</div>
                     <div class="actions">
                         <button onclick="copyToClipboard('${item.url}')">העתק קישור</button>
                         <button onclick="window.open('${item.url}', '_blank')">עבור לקישור</button>
+                        <button onclick="deleteHistoryItem('${type}', ${index})">מחק</button>
                     </div>
                 </div>
             `;
@@ -284,13 +336,26 @@
             });
         }
 
-        function useHistoryItem(text, type) {
-            if (type === 'create') {
-                document.getElementById("input").value = text;
-                generateQR();
-            } else {
-                showScannedQR(text);
+        function deleteHistoryItem(type, index) {
+            var history = getHistory(type);
+            history.splice(index, 1);
+            setHistory(history, type);
+            displayHistory(type);
+        }
+
+        function searchHistory(type) {
+            var input = document.getElementById(`search-${type}`).value.toLowerCase();
+            var history = getHistory(type);
+            var filteredHistory = history.filter(item => 
+                item.name.toLowerCase().includes(input) || 
+                item.url.toLowerCase().includes(input)
+            );
+            var historyHtml = "";
+            for (var i = 0; i < filteredHistory.length; i++) {
+                historyHtml += createHistoryItemHtml(filteredHistory[i], type, history.indexOf(filteredHistory[i]));
             }
+            document.getElementById(type === 'create' ? "history" : "scan-history").innerHTML = historyHtml;
+            initializeQRCodes(type);
         }
 
         function setCookie(name, value, days) {
@@ -327,7 +392,7 @@
             html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
                 .catch((err) => {
                     console.error(`QR Code scanning failed: ${err}`);
-                    alert("סליחה, לא הצלחנו להפעיל את המצלמה. אנא ודא שנתת הרשאות מצלמה ונסה שוב.");
+                     alert("סליחה, לא הצלחנו להפעיל את המצלמה. אנא ודא שנתת הרשאות מצלמה ונסה שוב.");
                 });
         }
 
