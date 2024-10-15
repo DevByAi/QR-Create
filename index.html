@@ -7,7 +7,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js"></script>
     <style>
-
         :root {
             --primary-color: #0077be;
             --secondary-color: #ffffff;
@@ -44,7 +43,8 @@
         }
 
         .tab {
-            background-color: var(--secondary-color);
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
             border: none;
             padding: 10px 20px;
             margin: 0 5px;
@@ -54,8 +54,8 @@
         }
 
         .tab.active {
-            background-color: var(--primary-color);
-            color: var(--secondary-color);
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
         }
 
         .tab-content {
@@ -112,6 +112,7 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
         }
 
         .history-item button {
@@ -128,7 +129,7 @@
         .night-mode-toggle {
             position: fixed;
             top: 20px;
-            left: 20px;
+            right: 20px;
             z-index: 1000;
         }
 
@@ -153,6 +154,16 @@
             .history-item button {
                 margin-top: 5px;
             }
+
+            h1 {
+                font-size: 1.5em;
+                margin-top: 50px;
+            }
+
+            .night-mode-toggle {
+                top: 10px;
+                right: 10px;
+            }
         }
 
         .night-mode {
@@ -162,7 +173,7 @@
             --background-color: #1a1a1a;
             --card-background: #2c2c2c;
         }
-          </style>
+    </style>
 </head>
 <body>
     <button class="night-mode-toggle" onclick="toggleNightMode()" aria-label="החלף מצב לילה">🌙</button>
@@ -215,7 +226,7 @@
     </div>
 
     <div class="version">
-        גרסה: 2.6.1
+        גרסה: 2.6.2
     </div>
 
     <script>
@@ -254,9 +265,7 @@
             }
         }
 
-        function generateQR() {
-            const url = document.getElementById('url').value;
-            const name = document.getElementById('url-name').value || url;
+        function generateQR(url = document.getElementById('url').value) {
             if (url) {
                 if (qrcode) {
                     qrcode.clear();
@@ -271,6 +280,7 @@
                         correctLevel : QRCode.CorrectLevel.H
                     });
                 }
+                const name = document.getElementById('url-name').value || url;
                 addToHistory('create', url, name);
             }
         }
@@ -324,6 +334,11 @@
                         <button onclick="deleteItem('${type}', ${index})" aria-label="מחק">מחק</button>
                     </div>
                 `;
+                div.onclick = function(event) {
+                    if (!event.target.closest('button')) {
+                        generateQR(item.data);
+                    }
+                };
                 historyElement.appendChild(div);
             });
         }
@@ -348,6 +363,11 @@
                         <button onclick="deleteItem('${type}', ${index})" aria-label="מחק">מחק</button>
                     </div>
                 `;
+                div.onclick = function(event) {
+                    if (!event.target.closest('button')) {
+                        generateQR(item.data);
+                    }
+                };
                 historyElement.appendChild(div);
             });
         }
@@ -363,6 +383,8 @@
         }
 
         function editName(type, index) {
+            const history = type === 'create' ? createHistory : scanHistory;
+            const newName = prompt('הכנס שם חדש:', history[indexfunction editName(type, index) {
             const history = type === 'create' ? createHistory : scanHistory;
             const newName = prompt('הכנס שם חדש:', history[index].name);
             if (newName !== null) {
@@ -398,4 +420,3 @@
     </script>
 </body>
 </html>
-
