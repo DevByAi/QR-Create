@@ -3,447 +3,299 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>יוצר וסורק קודי QR מתקדם</title>
+    <title>יוצר וסורק קודי QR - גרסה פשוטה</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js"></script>
     <style>
+        :root {
+            --primary-color: #0077be;
+            --secondary-color: #ffffff;
+            --text-color: #333333;
+            --background-color: #f0f0f0;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 10px;
-            background-color: #f0f4f8;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
         }
-        h1, h2 {
-            color: #2c3e50;
-            text-align: center;
-            font-size: 1.5em;
-        }
+
         .container {
-            background-color: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin-bottom: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
         }
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        select, input, button {
-            font-size: 16px;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        #qrcode, #reader {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        #qrcode img, #reader {
-            max-width: 100%;
-            height: auto;
-        }
-        .history-item {
-            background-color: white;
-            margin-bottom: 15px;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .history-item .qr-code {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 10px;
-        }
-        .history-item .url {
-            word-break: break-all;
-            margin-bottom: 10px;
-        }
-        .history-item .actions {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        .history-item .actions button {
-            flex: 1;
-        }
-        .version {
+
+        h1 {
+            color: var(--primary-color);
             text-align: center;
-            margin-top: auto;
-            padding: 10px;
-            font-size: 0.8em;
-            color: #777;
         }
+
         .tabs {
             display: flex;
-            justify-content: space-around;
+            justify-content: center;
             margin-bottom: 20px;
         }
+
         .tab {
-            padding: 12px 20px;
-            background-color: #ddd;
-            border-radius: 5px 5px 0 0;
+            background-color: var(--secondary-color);
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
             cursor: pointer;
+            border-radius: 20px;
+            transition: background-color 0.3s;
         }
+
         .tab.active {
-            background-color: white;
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
         }
+
         .tab-content {
             display: none;
-            animation: fadeIn 0.5s;
         }
+
         .tab-content.active {
             display: block;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
         }
-        #scanned-qr {
+
+        button {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #005fa3;
+        }
+
+        #qrcode {
             text-align: center;
             margin-top: 20px;
         }
-        #scanned-qr img {
-            max-width: 200px;
-            height: auto;
+
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
         }
-        .action-buttons {
+
+        #history {
+            margin-top: 20px;
+        }
+
+        .history-item {
+            background-color: var(--secondary-color);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 10px;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 15px;
+            justify-content: space-between;
+            align-items: center;
         }
-        .action-buttons button {
-            padding: 12px;
-            font-size: 16px;
+
+        .history-item button {
+            margin-left: 10px;
         }
-        .search-bar {
-            display: flex;
-            margin-bottom: 15px;
-            background-color: #f0f0f0;
-            border-radius: 25px;
-            padding: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .search-bar input {
-            flex-grow: 1;
-            border: none;
-            background: transparent;
-            padding: 10px 15px;
-            font-size: 16px;
-            outline: none;
-        }
-        .search-bar button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .search-bar button:hover {
-            background-color: #2980b9;
-        }
-        .qr-name {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
+
         @media (max-width: 600px) {
-            .search-bar {
-                flex-direction: column;
-                background-color: transparent;
-                box-shadow: none;
-                padding: 0;
+            .container {
+                padding: 10px;
             }
-            .search-bar input {
-                border-radius: 25px;
-                margin-bottom: 10px;
-                background-color: #f0f0f0;
-            }
-            .search-bar button {
-                width: 100%;
-            }
-        }
-        @media (min-width: 601px) {
-            body {
-                padding: 20px;
-                max-width: 800px;
-            }
-            .input-group {
-                flex-direction: row;
-            }
-            input {
-                width: 70%;
-            }
-            button {
-                width: 30%;
-            }
-            h1, h2 {
-                font-size: 2em;
+
+            .tab {
+                padding: 8px 16px;
             }
         }
     </style>
 </head>
 <body>
-    <h1>יוצר וסורק קודי QR מתקדם</h1>
-    <div class="tabs">
-        <div class="tab active" onclick="switchTab('create')">יצירת QR</div>
-        <div class="tab" onclick="switchTab('scan')">סריקת QR</div>
-    </div>
-    <div id="create-tab" class="tab-content active">
-        <div class="container">
-            <div class="input-group">
-                <input type="text" id="input-url" placeholder="הכנס כתובת אתר">
-                <input type="text" id="input-name" placeholder="תן שם לברקוד (אופציונלי)">
-                <button onclick="generateQR()">צור</button>
-            </div>
+    <div class="container">
+        <h1>יוצר וסורק קודי QR - גרסה פשוטה</h1>
+        
+        <div class="tabs" role="tablist">
+            <button class="tab active" onclick="openTab(event, 'create')" role="tab" aria-selected="true" aria-controls="create">יצירה</button>
+            <button class="tab" onclick="openTab(event, 'scan')" role="tab" aria-selected="false" aria-controls="scan">סריקה</button>
+            <button class="tab" onclick="openTab(event, 'history')" role="tab" aria-selected="false" aria-controls="history">היסטוריה</button>
+        </div>
+
+        <div id="create" class="tab-content active" role="tabpanel" aria-labelledby="create-tab">
+            <input type="url" id="url" placeholder="הכנס כתובת URL" aria-label="הכנס כתובת URL">
+            <button onclick="generateQR()" aria-label="צור קוד QR">צור קוד QR</button>
             <div id="qrcode"></div>
         </div>
-        <div class="container">
-            <h2>היסטוריה</h2>
-            <div class="search-bar">
-                <input type="text" id="search-create" placeholder="חפש בהיסטוריה">
-                <button onclick="searchHistory('create')">חיפוש</button>
-            </div>
-            <div id="history"></div>
-        </div>
-    </div>
-    <div id="scan-tab" class="tab-content">
-        <div class="container">
+
+        <div id="scan" class="tab-content" role="tabpanel" aria-labelledby="scan-tab">
             <div id="reader"></div>
-            <div id="scanned-qr"></div>
         </div>
-        <div class="container">
-            <h2>היסטוריית סריקות</h2>
-            <div class="search-bar">
-                <input type="text" id="search-scan" placeholder="חפש בהיסטוריה">
-                <button onclick="searchHistory('scan')">חיפוש</button>
-            </div>
-            <div id="scan-history"></div>
+
+        <div id="history" class="tab-content" role="tabpanel" aria-labelledby="history-tab">
+            <input type="text" id="search" placeholder="חפש בהיסטוריה" onkeyup="searchHistory()" aria-label="חפש בהיסטוריה">
+            <div id="historyList"></div>
         </div>
     </div>
-    <div class="version">גרסה: 2.6.0</div>
 
     <script>
-        let html5QrcodeScanner;
+        let history = JSON.parse(localStorage.getItem('qrHistory')) || [];
+        let qrcode;
 
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.getElementById(tabName + '-tab').classList.add('active');
-            document.querySelector(`.tab:nth-child(${tabName === 'create' ? 1 : 2})`).classList.add('active');
-            
+        document.addEventListener('DOMContentLoaded', function() {
+            displayHistory();
+        });
+
+        function openTab(evt, tabName) {
+            const tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].style.display = "none";
+                tabContents[i].setAttribute('aria-hidden', 'true');
+            }
+
+            const tabs = document.getElementsByClassName("tab");
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].className = tabs[i].className.replace(" active", "");
+                tabs[i].setAttribute('aria-selected', 'false');
+            }
+
+            document.getElementById(tabName).style.display = "block";
+            document.getElementById(tabName).setAttribute('aria-hidden', 'false');
+            evt.currentTarget.className += " active";
+            evt.currentTarget.setAttribute('aria-selected', 'true');
+
             if (tabName === 'scan') {
                 startScanner();
-            } else if (html5QrcodeScanner) {
-                html5QrcodeScanner.stop().catch(error => console.error(error));
+            } else if (tabName === 'history') {
+                displayHistory();
             }
         }
 
         function generateQR() {
-            var inputUrl = document.getElementById("input-url").value;
-            var inputName = document.getElementById("input-name").value;
-            if (inputUrl) {
-                var qrText = formatURL(inputUrl);
-                document.getElementById("qrcode").innerHTML = "";
-                new QRCode(document.getElementById("qrcode"), {
-                    text: qrText,
-                    width: 256,
-                    height: 256
-                });
-                addToHistory(qrText, inputName || qrText, 'create');
+            const url = document.getElementById('url').value;
+            if (url) {
+                if (qrcode) {
+                    qrcode.clear();
+                    qrcode.makeCode(url);
+                } else {
+                    qrcode = new QRCode(document.getElementById("qrcode"), {
+                        text: url,
+                        width: 256,
+                        height: 256,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.H
+                    });
+                }
+                addToHistory('created', url);
             }
         }
 
-        function formatURL(url) {
-            if (!/^https?:\/\//i.test(url)) {
-                url = "http://" + url;
+        function startScanner() {
+            const html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader", { fps: 10, qrbox: 250 });
+            html5QrcodeScanner.render(onScanSuccess);
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            addToHistory('scanned', decodedText);
+            alert(`קוד QR נסרק: ${decodedText}`);
+        }
+
+        function addToHistory(type, data) {
+            const item = { type, data, date: new Date().toISOString(), name: data };
+            history.unshift(item);
+            localStorage.setItem('qrHistory', JSON.stringify(history));
+            if (document.getElementById('history').style.display !== 'none') {
+                displayHistory();
             }
-            return url;
         }
 
-        function addToHistory(url, name, type) {
-            var history = getHistory(type);
-            if (!history.some(item => item.url === url)) {
-                history.unshift({ url: url, name: name, date: new Date().toISOString() });
-                if (history.length > 5) history.pop();
-                setHistory(history, type);
-                displayHistory(type);
-            }
-        }
-
-        function getHistory(type) {
-            var history = getCookie(`qr_${type}_history`);
-            return history ? JSON.parse(history) : [];
-        }
-
-        function setHistory(history, type) {
-            setCookie(`qr_${type}_history`, JSON.stringify(history), 365);
-        }
-
-        function displayHistory(type) {
-            var history = getHistory(type);
-            var historyHtml = "";
-            for (var i = 0; i < history.length; i++) {
-                historyHtml += createHistoryItemHtml(history[i], type, i);
-            }
-            document.getElementById(type === 'create' ? "history" : "scan-history").innerHTML = historyHtml;
-            initializeQRCodes(type);
-        }
-
-        function createHistoryItemHtml(item, type, index) {
-            return `
-                <div class="history-item">
-                    <div class="qr-name">${item.name}</div>
-                    <div class="qr-code" id="qr-${type}-${index}"></div>
-                    <div class="url">${item.url}</div>
-                    <div class="actions">
-                        <button onclick="copyToClipboard('${item.url}')">העתק קישור</button>
-                        <button onclick="window.open('${item.url}', '_blank')">עבור לקישור</button>
-                        <button onclick="deleteHistoryItem('${type}', ${index})">מחק</button>
+        function displayHistory() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            history.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <span>${item.name}</span>
+                    <div>
+                        <button onclick="copyToClipboard('${item.data}')" aria-label="העתק">העתק</button>
+                        <button onclick="openLink('${item.data}')" aria-label="פתח">פתח</button>
+                        <button onclick="editName(${index})" aria-label="ערוך">ערוך</button>
+                        <button onclick="deleteItem(${index})" aria-label="מחק">מחק</button>
                     </div>
-                </div>
-            `;
+                `;
+                historyList.appendChild(div);
+            });
+        }
+
+        function searchHistory() {
+            const searchTerm = document.getElementById('search').value.toLowerCase();
+            const filteredHistory = history.filter(item => 
+                item.name.toLowerCase().includes(searchTerm) || 
+                item.data.toLowerCase().includes(searchTerm)
+            );
+            displayFilteredHistory(filteredHistory);
+        }
+
+        function displayFilteredHistory(filteredHistory) {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            filteredHistory.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <span>${item.name}</span>
+                    <div>
+                        <button onclick="copyToClipboard('${item.data}')" aria-label="העתק">העתק</button>
+                        <button onclick="openLink('${item.data}')" aria-label="פתח">פתח</button>
+                        <button onclick="editName(${index})" aria-label="ערוך">ערוך</button>
+                        <button onclick="deleteItem(${index})" aria-label="מחק">מחק</button>
+                    </div>
+                `;
+                historyList.appendChild(div);
+            });
         }
 
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                alert('הקישור הועתק ללוח');
-            }, (err) => {
-                console.error('שגיאה בהעתקה: ', err);
+                alert('הטקסט הועתק ללוח');
             });
         }
 
-        function deleteHistoryItem(type, index) {
-            var history = getHistory(type);
-            history.splice(index, 1);
-            setHistory(history, type);
-            displayHistory(type);
+        function openLink(url) {
+            window.open(url, '_blank');
         }
 
-        function searchHistory(type) {
-            var input = document.getElementById(`search-${type}`).value.toLowerCase();
-            var history = getHistory(type);
-            var filteredHistory = history.filter(item => 
-                item.name.toLowerCase().includes(input) || 
-                item.url.toLowerCase().includes(input)
-            );
-            var historyHtml = "";
-            for (var i = 0; i < filteredHistory.length; i++) {
-                historyHtml += createHistoryItemHtml(filteredHistory[i], type, history.indexOf(filteredHistory[i]));
+        function editName(index) {
+            const newName = prompt('הכנס שם חדש:', history[index].name);
+            if (newName !== null) {
+                history[index].name = newName;
+                localStorage.setItem('qrHistory', JSON.stringify(history));
+                displayHistory();
             }
-            document.getElementById(type === 'create' ? "history" : "scan-history").innerHTML = historyHtml;
-            initializeQRCodes(type);
         }
 
-        function setCookie(name, value, days) {
-            var expires = "";
-            if (days) {
-                var date = new Date();
-                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                expires = "; expires=" + date.toUTCString();
+        function deleteItem(index) {
+            if (confirm('האם אתה בטוח שברצונך למחוק פריט זה?')) {
+                history.splice(index, 1);
+                localStorage.setItem('qrHistory', JSON.stringify(history));
+                displayHistory();
             }
-            document.cookie = name + "=" + (value || "") + expires + "; path=/";
         }
-
-        function getCookie(name) {
-            var nameEQ = name + "=";
-            var ca = document.cookie.split(';');
-            for (var i = 0; i < ca.length; i++) {
-                var c = ca[i];
-                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-            }
-            return null;
-        }
-
-        function startScanner() {
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.clear();
-            }
-            html5QrcodeScanner = new Html5Qrcode("reader");
-            const config = { 
-                fps: 10, 
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0
-            };
-            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
-                .catch((err) => {
-                    console.error(`QR Code scanning failed: ${err}`);
-                     alert("סליחה, לא הצלחנו להפעיל את המצלמה. אנא ודא שנתת הרשאות מצלמה ונסה שוב.");
-                });
-        }
-
-        function onScanSuccess(decodedText, decodedResult) {
-            html5QrcodeScanner.stop().then(() => {
-                showScannedQR(decodedText);
-                addToHistory(decodedText, 'scan');
-            });
-        }
-
-        function showScannedQR(text) {
-            var scannedDiv = document.getElementById("scanned-qr");
-            scannedDiv.innerHTML = `
-                <h3>הקוד שנסרק:</h3>
-                <div id="scanned-qrcode"></div>
-                <p>כתובת האתר: ${text}</p>
-                <p>האם תרצה להיכנס לקישור?</p>
-                <div class="action-buttons">
-                    <button onclick="window.open('${text}', '_blank')">כן</button>
-                    <button onclick="clearScannedQR()">לא</button>
-                </div>
-            `;
-            new QRCode(document.getElementById("scanned-qrcode"), {
-                text: text,
-                width: 128,
-                height: 128
-            });
-        }
-
-        function clearScannedQR() {
-            document.getElementById("scanned-qr").innerHTML = "";
-            startScanner();
-        }
-
-        function initializeQRCodes() {
-            ['create', 'scan'].forEach(type => {
-                var history = getHistory(type);
-                history.forEach(item => {
-                    new QRCode(document.getElementById(`qr-${type}-${item.date}`), {
-                        text: item.url,
-                        width: 128,
-                        height: 128
-                    });
-                });
-            });
-        }
-
-        displayHistory('create');
-        displayHistory('scan');
-        // Initialize QR codes after a short delay to ensure DOM elements are created
-        setTimeout(initializeQRCodes, 100);
     </script>
 </body>
 </html>
