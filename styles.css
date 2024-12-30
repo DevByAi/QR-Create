@@ -1,0 +1,160 @@
+:root {
+    --primary-color: #0077be;
+    --secondary-color: #fff;
+    --text-color: #333;
+    --background-color: #f0f0f0;
+    --card-background: #fff;
+    transition: all .3s ease;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    transition: background-color .3s ease;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1, h2 {
+    color: var(--primary-color);
+    text-align: center;
+}
+
+.tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.tab {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    border: none;
+    padding: 10px 20px;
+    margin: 0 5px;
+    cursor: pointer;
+    border-radius: 20px;
+    transition: background-color .3s;
+}
+
+.tab.active {
+    background-color: var(--secondary-color);
+    color: var(--primary-color);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.input-group, .search-bar {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+input[type="text"], input[type="url"] {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+}
+
+button {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 20px;
+    transition: background-color .3s;
+    white-space: nowrap;
+}
+
+button:hover {
+    background-color: #005fa3;
+}
+
+#qrcode, #reader, #scanned-qr {
+    text-align: center;
+    margin-top: 20px;
+}
+
+#history, #scan-history {
+    margin-top: 20px;
+}
+
+.history-item {
+    background-color: var(--card-background);
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    cursor: pointer;
+}
+
+.history-item button {
+    margin-left: 5px;
+}
+
+.version {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.8em;
+    color: #666;
+}
+
+.night-mode-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.night-mode {
+    --primary-color: #4da6ff;
+    --secondary-color: #2c2c2c;
+    --text-color: #fff;
+    --background-color: #1a1a1a;
+    --card-background: #2c2c2c;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+    .tab {
+        padding: 8px 16px;
+    }
+    .input-group, .search-bar {
+        flex-direction: column;
+    }
+    .history-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .history-item button {
+        margin-top: 5px;
+    }
+    h1 {
+        font-size: 1.5em;
+        margin-top: 50px;
+    }
+    .night-mode-toggle {
+        top: 10px;
+        right: 10px;
+    }
+} 
